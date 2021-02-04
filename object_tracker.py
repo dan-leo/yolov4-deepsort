@@ -43,11 +43,15 @@ flags.DEFINE_boolean('dont_show', False, 'dont show video output')
 flags.DEFINE_boolean('info', False, 'show detailed info of tracked objects')
 flags.DEFINE_boolean('count', False, 'count objects being tracked on screen')
 
+data_out = 'outputs/data.csv'
+with open(data_out, 'w') as f:
+    pass
+
 def main(_argv):
     # Definition of the parameters
-    max_cosine_distance = 0.4
-    nn_budget = 50
-    nms_max_overlap = 1.0
+    max_cosine_distance = 0.3
+    nn_budget = 2
+    nms_max_overlap = 0.8 #1.0
     
     # initialize deep sort
     model_filename = 'model_data/mars-small128.pb'
@@ -96,7 +100,7 @@ def main(_argv):
         codec = cv2.VideoWriter_fourcc(*FLAGS.output_format)
         out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
 
-    #frame_num = 0
+    frame_num = 0
     # while video is running
     print("Total number of frames: ", frame_count)
     pbar = tqdm(range(frame_count))
@@ -108,7 +112,7 @@ def main(_argv):
         else:
             print('Video has ended or failed, try a different video format!')
             break
-        #frame_num +=1
+        frame_num +=1
         #print('Frame #: ', frame_num)
         pbar.update(1)
         frame_size = frame.shape[:2]
@@ -166,10 +170,10 @@ def main(_argv):
         class_names = utils.read_class_names(cfg.YOLO.CLASSES)
 
         # by default allow all classes in .names file
-        #allowed_classes = list(class_names.values())
+        # allowed_classes = list(class_names.values())
         
         # custom allowed classes (uncomment line below to customize tracker for only people)
-        allowed_classes = ['person','bicycle']
+        allowed_classes = ['person','car']
 
         # loop through objects and use class index to get class name, allow only classes in allowed_classes list
         names = []
@@ -215,14 +219,19 @@ def main(_argv):
             if not track.is_confirmed() or track.time_since_update > 1:
                 continue 
             bbox = track.to_tlbr()
+            insideStore = bbox[3] > 210
             class_name = track.get_class()
             
             # draw bbox on screen
             color = colors[int(track.track_id) % len(colors)]
             color = [i * 255 for i in color]
-            cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), color, 2)
-            cv2.rectangle(frame, (int(bbox[0]), int(bbox[1]-30)), (int(bbox[0])+(len(class_name)+len(str(track.track_id)))*17, int(bbox[1])), color, -1)
-            cv2.putText(frame, class_name + "-" + str(track.track_id) + " " + str(bbox),(int(bbox[0]), int(bbox[1]-10)),0, 0.75, (255,255,255),2)
+            if insideStore:
+              cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), color, 2)
+              cv2.rectangle(frame, (int(bbox[0]), int(bbox[1]-20)), (int(bbox[0])+(len(class_name)+len(str(track.track_id)))*17, int(bbox[1])), color, -1)
+              cv2.putText(frame, class_name + "-" + str(track.track_id),(int(bbox[0]), int(bbox[1]-10)), 0, 0.75, (255,255,255), 2)
+              # cv2.rectangle(frame, (int(bbox[0]), int(bbox[1]-20)), (int(bbox[0])+(len(class_name)+len(str(track.track_id)))*5, int(bbox[1])), color, -1)
+              # cv2.putText(frame, class_name + "-" + str(track.track_id) + " " + str(int(bbox[0])) + "," + str(int(bbox[1])),(int(bbox[0]), int(bbox[1]-10)),0, 0.75, (255,255,255),2)
+              # cv2.putText(frame, str(track.track_id),(int(bbox[0]), int(bbox[1]-7)), 0, 0.5, (255,255,255),1)
 
             # Tracking with historical trajectory 
             center = (int(((bbox[0])+(bbox[2]))/2),int(((bbox[1])+(bbox[3]))/2))
@@ -234,9 +243,13 @@ def main(_argv):
             # draw motion path
             for j in range(1, len(pts[track.track_id])):
                 if pts[track.track_id][j - 1] is None or pts[track.track_id][j] is None:
-                   continue
+                  continue
                 thickness = int(np.sqrt(64 / float(j + 1)) * 2)
-                cv2.line(frame,(pts[track.track_id][j-1]), (pts[track.track_id][j]),(color),thickness)
+                if insideStore:
+                  cv2.line(frame,(pts[track.track_id][j-1]), (pts[track.track_id][j]),(color),thickness)
+
+            with open(data_out, 'a') as f:
+                f.write("{},{},{},{},{},{},{},{}\r\n".format(frame_num, str(track.track_id), center[0], center[1], int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])))
 
         # if enable info flag then print details about each track
             if FLAGS.info:
@@ -245,7 +258,7 @@ def main(_argv):
         # calculate frames per second of running detections
         fps = 1.0 / (time.time() - start_time)
         #print("FPS: %.2f" % fps)
-        cv2.putText(frame, "FPS: %f" %(fps), (5,100), 0, 5e-3 * 200, (0,0,0), 2)
+        cv2.putText(frame, "FPS: %f" %(fps), (5,50), 0, 5e-3 * 200, (255,255,255), 2)
         result = np.asarray(frame)
         result = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         
