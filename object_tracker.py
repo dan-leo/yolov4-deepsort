@@ -46,7 +46,7 @@ flags.DEFINE_boolean('count', False, 'count objects being tracked on screen')
 def main(_argv):
     # Definition of the parameters
     max_cosine_distance = 0.4
-    nn_budget = None
+    nn_budget = 50
     nms_max_overlap = 1.0
     
     # initialize deep sort
@@ -91,7 +91,7 @@ def main(_argv):
         # by default VideoCapture returns float instead of int
         width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
-	frame_count = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
+        frame_count = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
         fps = int(vid.get(cv2.CAP_PROP_FPS))
         codec = cv2.VideoWriter_fourcc(*FLAGS.output_format)
         out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
@@ -187,7 +187,7 @@ def main(_argv):
             cv2.putText(frame, "Objects being tracked: {}".format(count), (5, 35), cv2.FONT_HERSHEY_COMPLEX_SMALL, 2, (0, 255, 0), 2)
             #print("Objects being tracked: {}".format(count))
         
-	# delete detections that are not in allowed_classes
+        # delete detections that are not in allowed_classes
         bboxes = np.delete(bboxes, deleted_indx, axis=0)
         scores = np.delete(scores, deleted_indx, axis=0)
 
@@ -217,21 +217,21 @@ def main(_argv):
             bbox = track.to_tlbr()
             class_name = track.get_class()
             
-        # draw bbox on screen
+            # draw bbox on screen
             color = colors[int(track.track_id) % len(colors)]
             color = [i * 255 for i in color]
             cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), color, 2)
             cv2.rectangle(frame, (int(bbox[0]), int(bbox[1]-30)), (int(bbox[0])+(len(class_name)+len(str(track.track_id)))*17, int(bbox[1])), color, -1)
-            cv2.putText(frame, class_name + "-" + str(track.track_id),(int(bbox[0]), int(bbox[1]-10)),0, 0.75, (255,255,255),2)
+            cv2.putText(frame, class_name + "-" + str(track.track_id) + " " + str(bbox),(int(bbox[0]), int(bbox[1]-10)),0, 0.75, (255,255,255),2)
 
-        # Tracking with historical trajectory 
+            # Tracking with historical trajectory 
             center = (int(((bbox[0])+(bbox[2]))/2),int(((bbox[1])+(bbox[3]))/2))
             pts[track.track_id].append(center)
             thickness = 5
             # center point
             cv2.circle(frame,  (center), 1, color, thickness)
             
-			# draw motion path
+            # draw motion path
             for j in range(1, len(pts[track.track_id])):
                 if pts[track.track_id][j - 1] is None or pts[track.track_id][j] is None:
                    continue

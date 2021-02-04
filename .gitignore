@@ -1,0 +1,5 @@
+*.pyc
+*.weights
+*.avi
+*.mp4
+checkpoints/
