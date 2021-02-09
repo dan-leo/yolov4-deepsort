@@ -8,8 +8,7 @@ def non_max_suppression(boxes, classes, max_bbox_overlap, scores=None):
 
     Original code from [1]_ has been adapted to include confidence score.
 
-    .. [1] http://www.pyimagesearch.com/2015/02/16/
-           faster-non-maximum-suppression-python/
+    .. [1] http://www.pyimagesearch.com/2015/02/16/faster-non-maximum-suppression-python/
 
     Examples
     --------

@@ -49,9 +49,9 @@ with open(data_out, 'w') as f:
 
 def main(_argv):
     # Definition of the parameters
-    max_cosine_distance = 0.3
-    nn_budget = 2
-    nms_max_overlap = 0.8 #1.0
+    max_cosine_distance = 0.4
+    nn_budget = 50
+    nms_max_overlap = 1.0
     
     # initialize deep sort
     model_filename = 'model_data/mars-small128.pb'
