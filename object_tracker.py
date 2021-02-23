@@ -219,7 +219,7 @@ def main(_argv):
             if not track.is_confirmed() or track.time_since_update > 1:
                 continue 
             bbox = track.to_tlbr()
-            insideStore = bbox[3] > 210
+            insideStore = True #bbox[3] > 210
             class_name = track.get_class()
             
             # draw bbox on screen
